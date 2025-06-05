@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARR Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        
+        .container {
+            text-align: center;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 90%;
+        }
+        
+        .title {
+            font-size: 3.5rem;
+            font-weight: 300;
+            margin-bottom: 20px;
+            opacity: 0.9;
+            letter-spacing: 2px;
+        }
+        
+        .arr-display {
+            position: relative;
+            margin: 40px 0;
+        }
+        
+        .arr-value {
+            font-size: 8rem;
+            font-weight: 700;
+            color: #f39c12;
+            text-shadow: 0 0 30px rgba(243, 156, 18, 0.5);
+            animation: glow 3s ease-in-out infinite alternate;
+            transition: all 0.5s ease;
+        }
+        
+        .currency {
+            font-size: 4rem;
+            vertical-align: top;
+            margin-right: 10px;
+            opacity: 0.8;
+        }
+        
+        .growth-indicator {
+            font-size: 2rem;
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .growth-positive {
+            color: #f39c12;
+        }
+        
+        .growth-negative {
+            color: #ff6b6b;
+        }
+        
+        .arrow {
+            font-size: 2.5rem;
+            animation: bounce 2s infinite;
+        }
+        
+        .status {
+            margin-top: 30px;
+            font-size: 1.2rem;
+            opacity: 0.8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #f39c12;
+            animation: pulse 2s infinite;
+        }
+        
+        .last-updated {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-size: 0.9rem;
+            opacity: 0.6;
+        }
+        
+        .error {
+            color: #ff6b6b;
+            font-size: 1.5rem;
+            margin: 20px 0;
+        }
+        
+        .loading {
+            font-size: 1.5rem;
+            opacity: 0.8;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes glow {
+            from { text-shadow: 0 0 30px rgba(243, 156, 18, 0.5); }
+            to { text-shadow: 0 0 50px rgba(243, 156, 18, 0.8), 0 0 70px rgba(243, 156, 18, 0.3); }
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.1); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        
+        @keyframes countUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .animate-in {
+            animation: countUp 0.8s ease-out;
+        }
+        
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .title { font-size: 2.5rem; }
+            .arr-value { font-size: 5rem; }
+            .currency { font-size: 2.5rem; }
+            .container { padding: 20px; }
+        }
+        
+        /* Large TV optimization */
+        @media (min-width: 1920px) {
+            .title { font-size: 5rem; }
+            .arr-value { font-size: 12rem; }
+            .currency { font-size: 6rem; }
+            .container { max-width: 1200px; padding: 60px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">Commenda ARR</h1>
+        
+        <div class="arr-display">
+            <div id="arr-value" class="arr-value loading">Loading...</div>
+            <div id="growth-indicator" class="growth-indicator" style="display: none;">
+                <span id="arrow" class="arrow">↗</span>
+                <span id="growth-text">+12.5% this month</span>
+            </div>
+        </div>
+        
+        <div class="status" style="display: none;">
+            <div class="status-dot"></div>
+            <span>Live Data</span>
+        </div>
+        
+        <div id="error-message" class="error" style="display: none;"></div>
+    </div>
+    
+    <div class="last-updated">
+        Last updated: <span id="last-updated-time">Never</span>
+    </div>
+
+    <script>
+        // Configuration - YOU NEED TO UPDATE THESE
+        const SHEET_ID = 'YOUR_GOOGLE_SHEET_ID_HERE';
+        const CELL_RANGE = 'Sheet1!A1'; // Change this to your cell (e.g., 'Dashboard!B5')
+        const API_KEY = 'YOUR_GOOGLE_SHEETS_API_KEY_HERE';
+        
+        // Optional: Previous ARR value for growth calculation
+        let previousARR = null;
+        
+        // Format number with commas and currency
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(value);
+        }
+        
+        // Animate number change
+        function animateValue(element, start, end, duration = 1000) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const current = Math.floor(progress * (end - start) + start);
+                element.textContent = formatCurrency(current);
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+        
+        // Fetch ARR data from Google Sheets
+        async function fetchARRData() {
+            try {
+                const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${CELL_RANGE}?key=${API_KEY}`;
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (!data.values || !data.values[0] || !data.values[0][0]) {
+                    throw new Error('No data found in the specified cell');
+                }
+                
+                const arrValue = parseFloat(data.values[0][0].toString().replace(/[,$]/g, ''));
+                
+                if (isNaN(arrValue)) {
+                    throw new Error('Invalid number format in cell');
+                }
+                
+                return arrValue;
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                throw error;
+            }
+        }
+        
+        // Update the display
+        function updateDisplay(newARR) {
+            const arrElement = document.getElementById('arr-value');
+            const errorElement = document.getElementById('error-message');
+            const growthElement = document.getElementById('growth-indicator');
+            
+            // Hide error message
+            errorElement.style.display = 'none';
+            
+            // Get current displayed value for animation
+            const currentText = arrElement.textContent;
+            const currentValue = currentText === 'Loading...' ? 0 : 
+                parseFloat(currentText.replace(/[^0-9.-]+/g, ''));
+            
+            // Animate to new value
+            arrElement.classList.add('animate-in');
+            animateValue(arrElement, currentValue, newARR);
+            
+            // Calculate and show growth if we have previous data
+            if (previousARR && previousARR !== newARR) {
+                const growthPercent = ((newARR - previousARR) / previousARR * 100);
+                const arrow = document.getElementById('arrow');
+                const growthText = document.getElementById('growth-text');
+                
+                if (growthPercent > 0) {
+                    arrow.textContent = '↗';
+                    growthElement.className = 'growth-indicator growth-positive';
+                    growthText.textContent = `+${growthPercent.toFixed(1)}% from last update`;
+                } else if (growthPercent < 0) {
+                    arrow.textContent = '↘';
+                    growthElement.className = 'growth-indicator growth-negative';
+                    growthText.textContent = `${growthPercent.toFixed(1)}% from last update`;
+                } else {
+                    growthElement.style.display = 'none';
+                    return;
+                }
+                
+                growthElement.style.display = 'flex';
+            }
+            
+            previousARR = newARR;
+        }
+        
+        // Show error message
+        function showError(message) {
+            const arrElement = document.getElementById('arr-value');
+            const errorElement = document.getElementById('error-message');
+            
+            arrElement.textContent = '--';
+            arrElement.className = 'arr-value';
+            errorElement.textContent = `Error: ${message}`;
+            errorElement.style.display = 'block';
+        }
+        
+        // Update last updated time
+        function updateLastUpdatedTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString();
+            document.getElementById('last-updated-time').textContent = timeString;
+        }
+        
+        // Main update function
+        async function updateARR() {
+            try {
+                const arrValue = await fetchARRData();
+                updateDisplay(arrValue);
+                updateLastUpdatedTime();
+                console.log('Successfully updated ARR:', arrValue);
+            } catch (error) {
+                showError(error.message);
+                console.error('Failed to update ARR:', error);
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initial load
+            updateARR();
+            
+            // Auto-refresh every 5 minutes (300000 ms)
+            setInterval(updateARR, 300000);
+            
+            // Also refresh when page becomes visible (useful for TV displays)
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) {
+                    updateARR();
+                }
+            });
+        });
+        
+        // Manual refresh on click (for testing)
+        document.addEventListener('click', updateARR);
+    </script>
+</body>
+</html>
