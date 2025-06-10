@@ -13,8 +13,8 @@
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-            color: white;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            color: #2c3e50;
             height: 100vh;
             display: flex;
             flex-direction: column;
@@ -25,60 +25,62 @@
         
         .container {
             text-align: center;
-            padding: 40px;
-            background: rgba(255, 255, 255, 0.1);
+            padding: 60px 80px;
+            background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(10px);
             border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-            max-width: 800px;
+            border: 1px solid rgba(44, 62, 80, 0.1);
+            box-shadow: 0 20px 60px rgba(44, 62, 80, 0.1);
+            max-width: 1400px;
             width: 90%;
         }
         
         .title {
-            font-size: 3.5rem;
-            font-weight: 300;
-            margin-bottom: 20px;
-            opacity: 0.9;
-            letter-spacing: 2px;
+            font-size: 4rem;
+            font-weight: 600;
+            margin-bottom: 60px;
+            color: #2c3e50;
+            letter-spacing: 1px;
         }
         
         .arr-display {
             position: relative;
-            margin: 40px 0;
+            margin: 60px 0;
         }
         
         .arr-value {
-            font-size: 8rem;
-            font-weight: 700;
-            color: #f39c12;
-            text-shadow: 0 0 30px rgba(243, 156, 18, 0.5);
-            animation: glow 3s ease-in-out infinite alternate;
+            font-size: 4rem;
+            font-weight: 900;
+            color: #27ae60;
+            text-shadow: none;
+            animation: none;
             transition: all 0.5s ease;
+            line-height: 0.9;
         }
         
         .currency {
-            font-size: 4rem;
+            font-size: 3rem;
             vertical-align: top;
-            margin-right: 10px;
-            opacity: 0.8;
+            margin-right: 20px;
+            opacity: 1;
+            color: #27ae60;
         }
         
         .growth-indicator {
-            font-size: 2rem;
-            margin-top: 20px;
+            font-size: 2.5rem;
+            margin-top: 40px;
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
         }
         
         .growth-positive {
-            color: #f39c12;
+            color: #27ae60;
         }
         
         .growth-negative {
-            color: #ff6b6b;
+            color: #e74c3c;
         }
         
         .arrow {
@@ -109,18 +111,18 @@
             bottom: 20px;
             right: 20px;
             font-size: 0.9rem;
-            opacity: 0.6;
+            color: #7f8c8d;
         }
         
         .error {
-            color: #ff6b6b;
+            color: #e74c3c;
             font-size: 1.5rem;
             margin: 20px 0;
         }
         
         .loading {
-            font-size: 1.5rem;
-            opacity: 0.8;
+            font-size: 3rem;
+            color: #7f8c8d;
             animation: pulse 2s infinite;
         }
         
@@ -158,18 +160,55 @@
             .container { padding: 20px; }
         }
         
+        .small-logo {
+            height: 60px;
+            width: auto;
+            margin-bottom: 30px;
+        }
+        
+        .logo-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 50px;
+        }
+        
+        .brand-text {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #2c3e50;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 2.5rem;
+            font-weight: 400;
+            color: #7f8c8d;
+            letter-spacing: 1px;
+        }
+        
         /* Large TV optimization */
         @media (min-width: 1920px) {
-            .title { font-size: 5rem; }
-            .arr-value { font-size: 12rem; }
-            .currency { font-size: 6rem; }
-            .container { max-width: 1200px; padding: 60px; }
+            .brand-text { font-size: 4rem; }
+            .subtitle { font-size: 3.5rem; }
+            .arr-value { font-size: 6rem; }
+            .currency { font-size: 4.5rem; }
+            .container { max-width: 1800px; padding: 100px; }
+            .small-logo { height: 80px; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1 class="title">Commenda ARR</h1>
+        <div class="logo-container">
+            <!-- Small Commenda Logo -->
+            <img class="small-logo" src="https://ibb.co/0NCHsBv" alt="Commenda Logo" />
+            
+            <div class="brand-text">COMMENDA</div>
+            <div class="subtitle">Annual Recurring Revenue</div>
+        </div>
         
         <div class="arr-display">
             <div id="arr-value" class="arr-value loading">Loading...</div>
@@ -194,7 +233,7 @@
     <script>
         // Configuration - YOU NEED TO UPDATE THESE
         const SHEET_ID = '1iN1-KhDxkmZw3sJsVfdGbN7xhd2gbpnpGkMe_TO7eQ8';
-        const CELL_RANGE = 'Cohort Data!N306'; 
+        const CELL_RANGE = 'Cohort Data!N306';
         const API_KEY = 'AIzaSyAIVTYo9eTrw-Ho4bB73WuB7B7f0eprllE';
         
         // Optional: Previous ARR value for growth calculation
